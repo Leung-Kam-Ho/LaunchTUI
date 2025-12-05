@@ -214,7 +214,8 @@ class LaunchTUIApp(App):
                     with Horizontal(classes="controls"):
                         yield Button("Start", id="start_btn", variant="success")
                         yield Button("Stop", id="stop_btn", variant="error")
-                        yield Button("Restart", id="restart_btn")
+                        yield Button("Restart", id="restart_btn", variant="default")
+                        yield Button("Clear Logs", id="clear_btn", variant="warning")
                         yield Button("Refresh", id="refresh_btn", variant="primary")
 
                 with Vertical(classes="right-panel"):
@@ -265,6 +266,8 @@ class LaunchTUIApp(App):
             self.stop_daemon()
         elif button_id == "restart_btn":
             self.restart_daemon()
+        elif button_id == "clear_btn":
+            self.clear_logs()
         elif button_id == "refresh_btn":
             self.load_daemons()
 
@@ -454,6 +457,44 @@ class LaunchTUIApp(App):
     def action_restart_daemon(self) -> None:
         """Action to restart daemon"""
         self.restart_daemon()
+
+    def clear_logs(self) -> None:
+        """Clear the content of .err and .out files for the selected daemon"""
+        if not self.selected_daemon:
+            self.update_status("No daemon selected")
+            return
+
+        plist_data = self.selected_daemon["plist_data"]
+        cleared_files = []
+
+        try:
+            # Clear stdout file if configured
+            if "StandardOutPath" in plist_data:
+                stdout_path = plist_data["StandardOutPath"]
+                if os.path.exists(stdout_path):
+                    with open(stdout_path, "w") as f:
+                        f.truncate(0)
+                    cleared_files.append(stdout_path)
+
+            # Clear stderr file if configured
+            if "StandardErrorPath" in plist_data:
+                stderr_path = plist_data["StandardErrorPath"]
+                if os.path.exists(stderr_path):
+                    with open(stderr_path, "w") as f:
+                        f.truncate(0)
+                    cleared_files.append(stderr_path)
+
+            if cleared_files:
+                self.update_status(f"Cleared logs: {', '.join(cleared_files)}")
+                # Refresh the log display
+                self.show_daemon_details()
+            else:
+                self.update_status("No log files found to clear")
+
+        except PermissionError:
+            self.update_status("Permission denied clearing log files")
+        except Exception as e:
+            self.update_status(f"Error clearing logs: {str(e)}")
 
 
 def main():
