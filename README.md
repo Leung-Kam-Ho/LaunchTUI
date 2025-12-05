@@ -25,7 +25,7 @@ A terminal user interface for managing macOS launch daemons and launch agents. L
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/Leung-Kam-Ho/LaunchTUI.git
 cd LaunchTUI
 
 # Install dependencies
