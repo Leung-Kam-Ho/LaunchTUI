@@ -1,0 +1,14 @@
+[project]
+name = "launchdaemonsgui"
+version = "0.1.0"
+description = "GUI tool for managing macOS launch daemons"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["textual>=0.44.0"]
+
+[project.scripts]
+launchdaemons-gui = "launchdaemonsgui:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
