@@ -2,6 +2,8 @@
 
 A terminal user interface for managing macOS launch daemons and launch agents. LaunchTUI provides a convenient TUI for viewing, starting, stopping, and restarting system services without memorizing complex `launchctl` commands.
 
+![LaunchTUI Screenshot](media/interface.svg)
+
 ## Features
 
 - 📋 View all launch daemons and agents in a clean table interface
@@ -116,11 +118,3 @@ uv build
 uv run ruff check .
 uv run ruff format .
 ```
-
-## License
-
-[Add your license here]
-
-## Contributing
-
-[Add contribution guidelines here]
