@@ -33,6 +33,21 @@ uv sync
 
 # Install the package
 uv pip install -e .
+
+# Run the application
+uv run launchtui
+```
+
+### Install as a tool
+
+If you prefer to install LaunchTUI as a tool for easy access, you can do so with the following command:
+
+```bash
+# Install LaunchTUI as a tool
+uv tool install -e .
+
+# Run the application
+launchtui
 ```
 
 ## Usage
@@ -118,3 +133,27 @@ uv build
 uv run ruff check .
 uv run ruff format .
 ```
+
+For agentic usage and build commands, see [AGENTS.md](AGENTS.md).
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Install dependencies: `uv sync`
+4. Make your changes
+5. Run tests and linting: `uv run ruff check . && uv run ruff format .`
+6. Commit your changes: `git commit -m 'Add some feature'`
+7. Push to the branch: `git push origin feature-name`
+8. Open a Pull Request
+
+### Code Style
+
+- Follow the existing code style and conventions
+- Use type hints for all functions
+- Add docstrings for new functions and classes
+- Keep the UI responsive and user-friendly
