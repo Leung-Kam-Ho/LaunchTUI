@@ -2,7 +2,7 @@
 
 ## Build/Test Commands
 - **Install dependencies**: `uv sync`
-- **Run app**: `uv run python -m launchdaemonsgui.app` or `uv run launchdaemons-gui`
+- **Run app**: `uv run python -m launchtui.app` or `uv run launchtui`
 - **Build**: `uv build`
 - **Lint**: `uv run ruff check .` (if ruff is added)
 - **Format**: `uv run ruff format .` (if ruff is added)
@@ -15,7 +15,7 @@
 - **Type hints**: Use modern union syntax (`dict | None`) and return types
 - **Naming**: PascalCase for classes, snake_case for functions/variables
 - **Error handling**: Use try/except blocks with specific exception types
-- **File structure**: Single main app file in `src/launchdaemonsgui/`
+- **File structure**: Single main app file in `src/launchtui/`
 - **Dependencies**: Minimal - only textual>=0.44.0
 - **Subprocess**: Always use timeout parameter for external commands
 - **File operations**: Use context managers and proper encoding handling

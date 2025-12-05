@@ -122,7 +122,7 @@ class LogContent(Static):
             return f"Error reading {file_path}: {str(e)}"
 
 
-class LaunchDaemonApp(App):
+class LaunchTUIApp(App):
     """Textual UI for managing launch daemons"""
 
     CSS = """
@@ -457,7 +457,7 @@ class LaunchDaemonApp(App):
 
 
 def main():
-    app = LaunchDaemonApp()
+    app = LaunchTUIApp()
     app.run()
 
 
