@@ -131,13 +131,13 @@ class LaunchTUIApp(App):
     }
     
     .left-panel {
-        width: 40%;
+        width: 80;
         height: 100%;
         border-right: solid $primary;
     }
     
     .right-panel {
-        width: 60%;
+        width: 1fr;
         height: 100%;
         padding: 1;
     }
@@ -148,7 +148,12 @@ class LaunchTUIApp(App):
     
     .controls {
         height: 3;
-        dock: top;
+        margin-bottom: 1;
+    }
+    
+    .create-controls {
+        height: 3;
+        margin-top: 1;
     }
     
     .search {
@@ -184,6 +189,9 @@ class LaunchTUIApp(App):
         Binding("s", "start_daemon", "Start"),
         Binding("t", "stop_daemon", "Stop"),
         Binding("e", "restart_daemon", "Restart"),
+        Binding("c", "clear_logs", "Clear Logs"),
+        Binding("o", "open_folder", "Open Folder"),
+        Binding("i", "open_editor", "Open Editor"),
     ]
 
     selected_daemon = reactive(None)
@@ -205,12 +213,16 @@ class LaunchTUIApp(App):
         with Container(classes="container"):
             with Horizontal():
                 with Vertical(classes="left-panel"):
-                    with Horizontal(classes="search"):
-                        yield Label("Filter:")
-                        yield Input(placeholder="Search daemons...", id="search")
-
+                    yield Input(placeholder="Search daemons...", id="search")
                     yield DataTable(id="daemon_table", cursor_type="row")
+                    yield Label("Create")
+                    with Horizontal(classes="create-controls"):
+                        yield Button("Agent", id="create_agent_btn", variant="success")
+                        yield Button(
+                            "Daemon", id="create_daemon_btn", variant="warning"
+                        )
 
+                with Vertical(classes="right-panel"):
                     with Horizontal(classes="controls"):
                         yield Button("Start", id="start_btn", variant="success")
                         yield Button("Stop", id="stop_btn", variant="error")
@@ -218,7 +230,6 @@ class LaunchTUIApp(App):
                         yield Button("Clear Logs", id="clear_btn", variant="warning")
                         yield Button("Refresh", id="refresh_btn", variant="primary")
 
-                with Vertical(classes="right-panel"):
                     with VerticalScroll():
                         yield Label("Details", id="details_label")
                         yield DaemonDetails("No daemon selected", id="details")
@@ -233,7 +244,6 @@ class LaunchTUIApp(App):
         table = self.query_one("#daemon_table", DataTable)
         table.add_column("Label", key="label")
         table.add_column("Status", key="status")
-        table.add_column("Program", key="program")
 
         search_input = self.query_one("#search", Input)
         search_input.focus()
@@ -268,6 +278,10 @@ class LaunchTUIApp(App):
             self.restart_daemon()
         elif button_id == "clear_btn":
             self.clear_logs()
+        elif button_id == "create_agent_btn":
+            self.create_agent()
+        elif button_id == "create_daemon_btn":
+            self.create_system_daemon()
         elif button_id == "refresh_btn":
             self.load_daemons()
 
@@ -280,15 +294,11 @@ class LaunchTUIApp(App):
         self.filtered_daemons = []
 
         for daemon in self.daemons:
-            if (
-                search_term in daemon["label"].lower()
-                or search_term in daemon["program"].lower()
-            ):
+            if search_term in daemon["label"].lower():
                 self.filtered_daemons.append(daemon)
                 table.add_row(
                     daemon["label"],
                     daemon["status"],
-                    daemon["program"],
                     key=str(len(self.filtered_daemons) - 1),
                 )
 
@@ -310,7 +320,6 @@ class LaunchTUIApp(App):
                                 table.add_row(
                                     daemon_info["label"],
                                     daemon_info["status"],
-                                    daemon_info["program"],
                                     key=str(len(self.daemons) - 1),
                                 )
                 except PermissionError:
@@ -458,6 +467,18 @@ class LaunchTUIApp(App):
         """Action to restart daemon"""
         self.restart_daemon()
 
+    def action_clear_logs(self) -> None:
+        """Action to clear logs"""
+        self.clear_logs()
+
+    def action_open_folder(self) -> None:
+        """Action to open daemon folder in Finder"""
+        self.open_folder()
+
+    def action_open_editor(self) -> None:
+        """Action to open plist file in editor"""
+        self.open_editor()
+
     def clear_logs(self) -> None:
         """Clear the content of .err and .out files for the selected daemon"""
         if not self.selected_daemon:
@@ -495,6 +516,131 @@ class LaunchTUIApp(App):
             self.update_status("Permission denied clearing log files")
         except Exception as e:
             self.update_status(f"Error clearing logs: {str(e)}")
+
+    def open_folder(self) -> None:
+        """Open the folder containing the selected daemon's plist file in Finder"""
+        if not self.selected_daemon:
+            self.update_status("No daemon selected")
+            return
+
+        try:
+            daemon_path = self.selected_daemon["path"]
+            folder_path = os.path.dirname(daemon_path)
+
+            # Open the folder in Finder
+            subprocess.run(["open", folder_path], check=True, timeout=5)
+            self.update_status(f"Opened folder: {folder_path}")
+        except subprocess.CalledProcessError as e:
+            self.update_status(f"Failed to open folder: {e}")
+        except Exception as e:
+            self.update_status(f"Error opening folder: {str(e)}")
+
+    def open_editor(self) -> None:
+        """Open the selected daemon's plist file in the default text editor"""
+        if not self.selected_daemon:
+            self.update_status("No daemon selected")
+            return
+
+        try:
+            plist_path = self.selected_daemon["path"]
+
+            # Open the file with the default text editor
+            subprocess.run(["open", "-t", plist_path], check=True, timeout=5)
+            self.update_status(f"Opened {os.path.basename(plist_path)} in editor")
+        except subprocess.CalledProcessError as e:
+            self.update_status(f"Failed to open editor: {e}")
+        except Exception as e:
+            self.update_status(f"Error opening editor: {str(e)}")
+
+    def create_agent(self) -> None:
+        """Create a new launch agent plist file"""
+        try:
+            # Default to user's LaunchAgents directory for new agents
+            default_path = os.path.expanduser("~/Library/LaunchAgents")
+            os.makedirs(default_path, exist_ok=True)
+
+            # Generate a unique filename
+            import uuid
+
+            unique_id = str(uuid.uuid4())[:8]
+            filename = f"com.user.agent.{unique_id}.plist"
+            filepath = os.path.join(default_path, filename)
+
+            # Create a basic plist template
+            plist_template = {
+                "Label": f"com.user.agent.{unique_id}",
+                "ProgramArguments": ["/bin/bash", "-c", "echo 'Hello from agent'"],
+                "RunAtLoad": False,
+                "KeepAlive": False,
+                "StandardOutPath": f"/tmp/com.user.agent.{unique_id}.out",
+                "StandardErrorPath": f"/tmp/com.user.agent.{unique_id}.err",
+            }
+
+            # Write the plist file
+            with open(filepath, "wb") as f:
+                plistlib.dump(plist_template, f)
+
+            self.update_status(f"Created new agent: {filename}")
+
+            # Refresh the daemon list
+            self.load_daemons()
+
+            # Open the folder for the user to edit the file
+            subprocess.run(["open", default_path], check=True, timeout=5)
+
+        except Exception as e:
+            self.update_status(f"Error creating agent: {str(e)}")
+
+    def create_system_daemon(self) -> None:
+        """Create a new system launch daemon plist file"""
+        try:
+            # Use system LaunchDaemons directory for new daemons
+            default_path = "/Library/LaunchDaemons"
+
+            # Check if we have write permissions
+            if not os.access(default_path, os.W_OK):
+                self.update_status(
+                    f"Need sudo access to create daemon in {default_path}"
+                )
+                return
+
+            # Generate a unique filename
+            import uuid
+
+            unique_id = str(uuid.uuid4())[:8]
+            filename = f"com.system.daemon.{unique_id}.plist"
+            filepath = os.path.join(default_path, filename)
+
+            # Create a basic plist template for system daemon
+            plist_template = {
+                "Label": f"com.system.daemon.{unique_id}",
+                "ProgramArguments": [
+                    "/bin/bash",
+                    "-c",
+                    "echo 'Hello from system daemon'",
+                ],
+                "RunAtLoad": False,
+                "KeepAlive": False,
+                "StandardOutPath": f"/var/log/com.system.daemon.{unique_id}.out",
+                "StandardErrorPath": f"/var/log/com.system.daemon.{unique_id}.err",
+                "UserName": "root",
+                "GroupName": "wheel",
+            }
+
+            # Write the plist file
+            with open(filepath, "wb") as f:
+                plistlib.dump(plist_template, f)
+
+            self.update_status(f"Created new system daemon: {filename}")
+
+            # Refresh the daemon list
+            self.load_daemons()
+
+            # Open the folder for the user to edit the file
+            subprocess.run(["open", default_path], check=True, timeout=5)
+
+        except Exception as e:
+            self.update_status(f"Error creating system daemon: {str(e)}")
 
 
 def main():
