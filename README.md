@@ -7,11 +7,15 @@ A terminal user interface for managing macOS launch daemons and launch agents. L
 ## Features
 
 - 📋 View all launch daemons and agents in a clean table interface
-- 🔍 Search and filter services by name or program path
+- 🔍 Search and filter services by name
 - ▶️ Start, stop, and restart services with keyboard shortcuts
 - 📊 View detailed service information and configuration
 - 📝 Display stdout/stderr logs for services with logging configured
 - 🔄 Real-time service status updates
+- ➕ Create new launch agents and daemons with templates
+- 📂 Open service folders in Finder
+- ✏️ Edit plist files in default text editor
+- 🗑️ Clear log files with one click
 
 ## Installation
 
@@ -71,6 +75,9 @@ uv run launchtui
 - **s** - Start selected service
 - **t** - Stop selected service  
 - **e** - Restart selected service
+- **c** - Clear logs for selected service
+- **o** - Open service folder in Finder
+- **i** - Open plist file in text editor
 - **↑/↓** - Navigate service list
 - **Type** - Search/filter services
 
@@ -78,12 +85,13 @@ uv run launchtui
 
 The interface is divided into two main panels:
 
-**Left Panel:**
+**Left Panel (80 characters wide):**
 - Search bar for filtering services
-- Service table showing Label, Status, and Program
-- Control buttons (Start, Stop, Restart, Refresh)
+- Service table showing Label and Status
+- Create section with Agent and Daemon buttons
 
-**Right Panel:**
+**Right Panel (remaining space):**
+- Control buttons (Start, Stop, Restart, Clear Logs, Refresh)
 - Service details showing configuration from plist files
 - Log output displaying stdout/stderr when available
 
@@ -94,6 +102,27 @@ LaunchTUI scans the following directories:
 - `/System/Library/LaunchDaemons` - System-level daemons (requires sudo)
 - `/Library/LaunchDaemons` - System-wide daemons (requires sudo)
 - `~/Library/LaunchAgents` - User-level agents
+
+## Creating New Services
+
+### Launch Agents
+- Click **"Agent"** button or use keyboard shortcuts
+- Creates plist file in `~/Library/LaunchAgents/`
+- Runs in user context, no sudo required
+- Opens folder for editing after creation
+
+### Launch Daemons  
+- Click **"Daemon"** button or use keyboard shortcuts
+- Creates plist file in `/Library/LaunchDaemons/`
+- Runs as root, requires sudo access
+- Includes UserName and GroupName settings
+- Uses `/var/log/` for log files
+
+Both create templates with basic configuration that you can customize:
+- Unique label with UUID
+- Placeholder command
+- Standard output/error paths
+- Disabled by default (RunAtLoad: false)
 
 ## Troubleshooting
 
